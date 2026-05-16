@@ -1,19 +1,36 @@
+import React, { useState } from "react";
 import type { PluginDefinition, PluginAPI } from "../registry";
 import { Sparkles, FileUp, Settings, TerminalSquare, AlertCircle } from "lucide-react";
 
 // Простой React-компонент для настроек плагина
 function MyPluginSettings() {
+  const [magic, setMagic] = useState(() => pluginApi?.settings?.get('magic_enabled', false));
+  const [apiKey, setApiKey] = useState(() => pluginApi?.settings?.get('api_key', ''));
+
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-app-text-secondary">
         Это демонстрационный компонент настроек плагина. Вы можете использовать любые React хуки (useState, useEffect и т.д.) здесь.
       </p>
       <label className="flex items-center gap-2 text-sm text-app-text-primary">
-        <input type="checkbox" className="rounded border-app-border bg-app-input-bg text-app-accent focus:ring-app-accent" />
-        Включить магические функции
+        <input 
+          type="checkbox" 
+          checked={magic}
+          onChange={(e) => {
+            setMagic(e.target.checked);
+            pluginApi?.settings?.set('magic_enabled', e.target.checked);
+          }}
+          className="rounded border-app-border bg-app-input-bg text-app-accent focus:ring-app-accent" 
+        />
+        Включить магические функции (сохраняется в api.settings)
       </label>
       <input 
-        type="text" 
+        type="text"
+        value={apiKey}
+        onChange={(e) => {
+          setApiKey(e.target.value);
+          pluginApi?.settings?.set('api_key', e.target.value);
+        }}
         placeholder="API Ключ или параметр..." 
         className="w-full px-3 py-2 rounded-lg border border-app-border bg-app-input-bg text-app-text-primary focus:outline-app-accent text-sm"
       />
@@ -93,9 +110,24 @@ const myPlugin: PluginDefinition = {
       execute: () => {
         if (!pluginApi || !pluginApi.getState) return;
         const state = pluginApi.getState();
-        // Используем mock API для добавления карточки
-        state.addChild("test-node-1", "Новая карточка, созданная плагином! ✨");
+        // Используем mock API для добавления дочерней карточки (parentId = "test-node-1")
+        state.addChild("test-node-1", "Новая дочерняя карточка, созданная плагином! ✨");
         pluginApi.toast?.("Новая карточка добавлена", "success");
+      }
+    },
+    {
+      id: "test-command-uppercase",
+      label: "Uppercase Selected Text",
+      icon: Sparkles,
+      execute: () => {
+        if (!pluginApi || !pluginApi.editor) return;
+        const selection = pluginApi.editor.getActiveSelection();
+        if (selection && selection.text) {
+          pluginApi.editor.replaceSelection(selection.text.toUpperCase());
+          pluginApi.toast?.("Text updated!", "success");
+        } else {
+          alert("Пожалуйста, сначала выделите текст в карточке.");
+        }
       }
     }
   ],
