@@ -84,9 +84,9 @@ export interface PluginAPI {
     setNodeMetadata?: (id: string, key: string, value: any) => void;
     getNodeMetadata?: (id: string, key: string) => any;
     resolveContext?: (id: string, scope: "card" | "document" | "level_branch" | "level_all" | "branch_parent" | "branch_children" | string) => string;
-    batchUpdate?: (updates: {id: string, content?: string, metadata?: Record<string,any>}[]) => void;
-    addAttachment?: (id: string, file: File | {name: string, type: string, url: string}) => void;
-    getAttachments?: (id: string) => {id: string; name: string; type: string; url: string}[];
+    batchUpdate?: (updates: { id: string, content?: string, metadata?: Record<string, any> }[]) => void;
+    addAttachment?: (id: string, file: File | { name: string, type: string, url: string }) => void;
+    getAttachments?: (id: string) => { id: string; name: string; type: string; url: string }[];
     removeAttachment?: (nodeId: string, attachmentId: string) => void;
   };
   editor?: {
@@ -100,13 +100,13 @@ export interface PluginAPI {
     getGlobal: (key: string) => any;
   };
   llm?: {
-    generateText: (prompt: unknown, options?: any) => Promise<{text: string, usedModel: string}>;
-    generateTextStream?: (prompt: unknown, options?: any, onChunk?: (chunk: string) => void) => Promise<{text: string, usedModel: string}>;
+    generateText: (prompt: unknown, options?: any) => Promise<{ text: string, usedModel: string }>;
+    generateTextStream?: (prompt: unknown, options?: any, onChunk?: (chunk: string) => void) => Promise<{ text: string, usedModel: string }>;
   };
   ui?: {
     renderOverlay: (id: string, Component: React.ComponentType<any>, position?: any) => void;
     closeOverlay: (id: string) => void;
-    registerCardWidget?: (widgetId: string, Component: React.ComponentType<{node: PuuNode}>, position?: "top" | "bottom" | "replace") => void;
+    registerCardWidget?: (widgetId: string, Component: React.ComponentType<{ node: PuuNode }>, position?: "top" | "bottom" | "replace") => void;
   };
   getState?: () => any; // Returns the AppStore state
   addJob?: (title: string) => string;
@@ -120,13 +120,13 @@ export interface PluginAPI {
 class MockRegistry {
   plugin: PluginDefinition | null = null;
   api: PluginAPI;
-  
+
   nodes: PuuNode[] = [
     {
       id: "test-node-1",
       type: "note",
       title: "Test Note",
-      content: "Это тестовая карточка для проверки работы плагинов.\n\nВы можете редактировать этот текст как вам удобно, чтобы проверить, как ваш плагин справляется с различными задачами, например:\n- Выполнение перевода текста.\n- Исправление орфографии.\n- Краткий пересказ (суммаризация).\n- Извлечение важных мыслей или ключевых слов.\n- Отправка содержимого в нейросеть.\n\nThe quick brown fox jumps over the lazy dog.",
+      content: "Это тестовая карточка для проверки работы плагинов.\n\nВы можете отредактировать этот текст как вам удобно, чтобы проверить, как ваш плагин справляется с различными задачами, например:\n- Выполнение перевода текста.\n- Исправление орфографии.\n- Краткий пересказ (суммаризация).\n- Извлечение важных мыслей или ключевых слов.\n- Отправка содержимого в нейросеть.\n\nThe quick brown fox jumps over the lazy dog.",
       children: []
     }
   ];
@@ -136,13 +136,13 @@ class MockRegistry {
   constructor() {
     this.api = {
       plugins: {
-        addCommand: () => {},
+        addCommand: () => { },
       },
       events: {
         on: (e, cb) => {
-           window.addEventListener(`sandbox:${e}`, (ev: any) => cb(ev.detail));
+          window.addEventListener(`sandbox:${e}`, (ev: any) => cb(ev.detail));
         },
-        off: () => {}
+        off: () => { }
       },
       document: {
         addNode: (content, parentId) => {
@@ -276,7 +276,7 @@ class MockRegistry {
           const val = localStorage.getItem(`plugin_setting_${key}`);
           try {
             return val ? JSON.parse(val) : def;
-          } catch(e) {
+          } catch (e) {
             return val || def;
           }
         },
@@ -285,66 +285,66 @@ class MockRegistry {
         },
         getGlobal: (key: string) => {
           if (key === 'geminiApiKey') {
-             return localStorage.getItem('GLOBAL_GEMINI_API_KEY') || import.meta.env.VITE_GLOBAL_GEMINI_API_KEY || '';
+            return localStorage.getItem('GLOBAL_GEMINI_API_KEY') || import.meta.env.VITE_GLOBAL_GEMINI_API_KEY || '';
           }
           return null;
         }
       },
       llm: {
         generateText: async (prompt: unknown, options?: any) => {
-           const { generateContentFallback } = await import('../utils/aiModels');
-           return generateContentFallback(prompt, options?.model);
+          const { generateContentFallback } = await import('../utils/aiModels');
+          return generateContentFallback(prompt, options?.model);
         },
         generateTextStream: async (prompt: unknown, options?: any, onChunk?: (chunk: string) => void) => {
-           const { generateContentFallback } = await import('../utils/aiModels');
-           const result = await generateContentFallback(prompt, options?.model);
-           if (onChunk) onChunk(result.text);
-           return result;
+          const { generateContentFallback } = await import('../utils/aiModels');
+          const result = await generateContentFallback(prompt, options?.model);
+          if (onChunk) onChunk(result.text);
+          return result;
         }
       },
       ui: {
         renderOverlay: (id, Component, position) => {
-           let overlayNode = document.getElementById(`plugin-overlay-${id}`);
-           if (!overlayNode) {
-             overlayNode = document.createElement('div');
-             overlayNode.id = `plugin-overlay-${id}`;
-             overlayNode.style.position = 'fixed';
-             overlayNode.style.zIndex = '9999';
-             if (position) {
-                 Object.assign(overlayNode.style, position);
-             } else {
-                 overlayNode.style.top = '0';
-                 overlayNode.style.left = '0';
-                 overlayNode.style.width = '100vw';
-                 overlayNode.style.height = '100vh';
-                 overlayNode.style.pointerEvents = 'none';
-             }
-             document.body.appendChild(overlayNode);
-           }
-           import('react-dom/client').then(({ createRoot }) => {
-             import('react').then((React) => {
-               // @ts-ignore
-               const root = overlayNode._reactRoot || createRoot(overlayNode);
-               // @ts-ignore
-               overlayNode._reactRoot = root;
-               root.render(React.createElement(Component, null));
-             });
-           });
+          let overlayNode = document.getElementById(`plugin-overlay-${id}`);
+          if (!overlayNode) {
+            overlayNode = document.createElement('div');
+            overlayNode.id = `plugin-overlay-${id}`;
+            overlayNode.style.position = 'fixed';
+            overlayNode.style.zIndex = '9999';
+            if (position) {
+              Object.assign(overlayNode.style, position);
+            } else {
+              overlayNode.style.top = '0';
+              overlayNode.style.left = '0';
+              overlayNode.style.width = '100vw';
+              overlayNode.style.height = '100vh';
+              overlayNode.style.pointerEvents = 'none';
+            }
+            document.body.appendChild(overlayNode);
+          }
+          import('react-dom/client').then(({ createRoot }) => {
+            import('react').then((React) => {
+              // @ts-ignore
+              const root = overlayNode._reactRoot || createRoot(overlayNode);
+              // @ts-ignore
+              overlayNode._reactRoot = root;
+              root.render(React.createElement(Component, null));
+            });
+          });
         },
         closeOverlay: (id) => {
           const overlayNode = document.getElementById(`plugin-overlay-${id}`);
           if (overlayNode) {
-             // @ts-ignore
-             const root = overlayNode._reactRoot;
-             if (root) root.unmount();
-             overlayNode.remove();
+            // @ts-ignore
+            const root = overlayNode._reactRoot;
+            if (root) root.unmount();
+            overlayNode.remove();
           }
         },
         registerCardWidget: (widgetId, Component, position) => {
           console.log(`Sandbox: Registered Card Widget ${widgetId} at ${position || 'bottom'}`);
         }
       },
-      getState: () => ({ 
+      getState: () => ({
         nodes: this.nodes,
         addChild: (parentId: string | null, content: string) => {
           const newNode: PuuNode = {
@@ -353,7 +353,7 @@ class MockRegistry {
             content,
             children: []
           };
-          
+
           if (!parentId) {
             this.nodes = [...this.nodes, newNode];
           } else {
